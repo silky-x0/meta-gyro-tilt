@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171716">
+  <meta name="description" content="Format Press — local JPEG conversion for Ray-Ban Meta photos.">
+  <title>Format Press — Ray-Ban Meta Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.6/piexif.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --coal-950: #111110;
+      --coal-900: #171716;
+      --coal-850: #1d1d1b;
+      --coal-800: #242422;
+      --coal-750: #2b2b28;
+      --line: #393935;
+      --line-strong: #4a4a44;
+      --bone: #f1efe7;
+      --bone-soft: #c8c5bb;
+      --bone-muted: #8e8c84;
+      --ember: #ef6b3d;
+      --ember-bright: #ff8050;
+      --ember-dark: #8e3b25;
+      --green: #7cbe8b;
+      --red: #f0786b;
+      --display: "Bebas Neue", Impact, sans-serif;
+      --body: "Barlow", system-ui, sans-serif;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--coal-950); }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 40px 40px,
+        var(--coal-950);
+      color: var(--bone);
+      font-family: var(--body);
+      font-size: 15px;
+      letter-spacing: .01em;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, .dropzone:focus-visible {
+      outline: 2px solid var(--ember-bright);
+      outline-offset: 3px;
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      display: inline-block;
+      flex: 0 0 auto;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 224px minmax(0, 1fr);
+      gap: 24px;
+    }
+
+    .sidebar {
+      min-height: calc(100vh - 48px);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      background: var(--coal-900);
+    }
+
+    .brand {
+      padding: 24px 20px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ember);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--ember);
+      box-shadow: 0 0 0 4px rgba(239, 107, 61, .12);
+    }
+
+    .brand h1 {
+      margin: 22px 0 4px;
+      color: var(--bone);
+      font: 400 42px/.85 var(--display);
+      letter-spacing: .02em;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--bone-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .side-section {
+      padding: 22px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--bone-muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .workflow {
+      display: grid;
+      gap: 4px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .workflow li {
+      min-height: 42px;
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      color: var(--bone-muted);
+      border-left: 2px solid transparent;
+      font-size: 13px;
+    }
+
+    .workflow li.active {
+      color: var(--bone);
+      border-left-color: var(--ember);
+      background: var(--coal-850);
+    }
+
+    .workflow li.done { color: var(--green); }
+
+    .step-number {
+      color: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    .side-meta {
+      margin-top: auto;
+      padding: 18px 16px;
+    }
+
+    .local-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--bone-soft);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(124, 190, 139, .1);
+    }
+
+    .side-meta p {
+      margin: 10px 0 0;
+      color: var(--bone-muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-left, .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-label {
+      color: var(--bone-muted);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .local-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--bone-soft);
+      font-size: 12px;
+    }
+
+    .local-label .status-dot { width: 6px; height: 6px; }
+
+    .content {
+      padding: 42px 0 28px;
+    }
+
+    .intro {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .intro h2 {
+      max-width: 680px;
+      margin: 0;
+      color: var(--bone);
+      font: 400 clamp(48px, 7vw, 86px)/.87 var(--display);
+      letter-spacing: .01em;
+      text-transform: uppercase;
+    }
+
+    .intro-copy {
+      max-width: 280px;
+      margin: 0 0 3px;
+      color: var(--bone-muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .intro-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      background: var(--coal-900);
+      border: 1px solid var(--line);
+      color: var(--bone-soft);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .intro-badge .icon { width: 13px; height: 13px; color: var(--ember); }
+    .intro-badge em {
+      color: var(--ember-bright);
+      font-style: normal;
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, .85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--coal-900);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    .panel-header {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      color: var(--bone);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .panel-index {
+      color: var(--bone-muted);
+      font-size: 11px;
+      letter-spacing: .12em;
+    }
+
+    .source-panel { min-height: 570px; }
+    .source-body { padding: 20px; }
+
+    .dropzone {
+      min-height: 350px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px dashed var(--line-strong);
+      background: #131312;
+      cursor: pointer;
+      transition: border-color .15s ease, background-color .15s ease;
+    }
+
+    .dropzone:hover, .dropzone.dragging {
+      border-color: var(--ember);
+      background: #191513;
+    }
+
+    .dropzone.has-preview {
+      align-items: stretch;
+      border-style: solid;
+    }
+
+    .drop-content {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .upload-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      color: var(--ember);
+      border: 1px solid var(--ember-dark);
+      background: rgba(239, 107, 61, .07);
+    }
+
+    .drop-content strong {
+      color: var(--bone);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .drop-content span {
+      max-width: 270px;
+      color: var(--bone-muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .text-button {
+      padding: 0;
+      color: var(--ember-bright);
+      background: none;
+      border: 0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .text-button:hover { color: var(--bone); }
+
+    .preview-wrap {
+      width: 100%;
+      display: none;
+      position: relative;
+      background: #0c0c0b;
+    }
+
+    .preview-wrap.visible { display: block; }
+
+    .preview {
+      width: 100%;
+      height: 350px;
+      display: block;
+      object-fit: contain;
+    }
+
+    .preview-chip {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      color: var(--bone);
+      background: rgba(17, 17, 16, .9);
+      border: 1px solid var(--line-strong);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .preview-chip .status-dot { width: 5px; height: 5px; }
+
+    .file-row {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 2px 0;
+    }
+
+    .file-detail { min-width: 0; }
+
+    .file-name {
+      overflow: hidden;
+      color: var(--bone);
+      font-size: 14px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-meta {
+      margin-top: 4px;
+      color: var(--bone-muted);
+      font-size: 12px;
+    }
+
+    .file-change {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      color: var(--bone-soft);
+      background: transparent;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .file-change:hover {
+      color: var(--bone);
+      border-color: var(--bone-muted);
+    }
+
+    .source-tools {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .source-tool {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      color: var(--bone-muted);
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .source-tool:hover {
+      color: var(--bone);
+      border-color: var(--line-strong);
+    }
+
+    .output-panel {
+      position: sticky;
+      top: 24px;
+    }
+
+    .output-body { padding: 20px; }
+
+    .output-state {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 92px;
+      padding: 14px;
+      background: var(--coal-850);
+      border: 1px solid var(--line);
+    }
+
+    .state-mark {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      color: var(--bone-muted);
+      border: 1px solid var(--line-strong);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .output-state.ready .state-mark {
+      color: var(--ember-bright);
+      border-color: var(--ember-dark);
+    }
+
+    .output-state strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--bone);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .output-state span {
+      display: block;
+      color: var(--bone-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .specs {
+      margin: 22px 0 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .spec-row {
+      min-height: 43px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .spec-row dt { color: var(--bone-muted); }
+    .spec-row dd {
+      margin: 0;
+      color: var(--bone-soft);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .spec-row dd.ready { color: var(--green); }
+
+    .actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .button {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+
+    .button.primary {
+      color: #21110b;
+      background: var(--ember);
+      border-color: var(--ember);
+    }
+
+    .button.primary:hover:not(:disabled) {
+      background: var(--ember-bright);
+      border-color: var(--ember-bright);
+    }
+
+    .button.secondary {
+      color: var(--bone-soft);
+      background: var(--coal-850);
+      border-color: var(--line-strong);
+    }
+
+    .button.secondary:hover:not(:disabled) {
+      color: var(--bone);
+      border-color: var(--bone-muted);
+      background: var(--coal-800);
+    }
+
+    .button:disabled {
+      color: #67665f;
+      background: #20201e;
+      border-color: #2c2c28;
+      cursor: not-allowed;
+    }
+
+    .action-note {
+      margin: 14px 0 0;
+      color: var(--bone-muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: none;
+      align-items: flex-start;
+      gap: 9px;
+      margin: 16px 20px 20px;
+      padding: 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--coal-850);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .status.visible { display: flex; }
+    .status.success { color: var(--green); border-color: rgba(124, 190, 139, .4); }
+    .status.error { color: var(--red); border-color: rgba(240, 120, 107, .4); }
+    .status.loading { color: var(--ember-bright); border-color: var(--ember-dark); }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 auto;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    .privacy-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      padding-top: 17px;
+      color: var(--bone-muted);
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .privacy-bar .icon { color: var(--green); width: 15px; height: 15px; }
+
+    .camera-input, .file-input { display: none; }
+
+    .disclaimer-footer {
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: var(--coal-900);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--bone-muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .disclaimer-footer strong {
+      color: var(--bone-soft);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      .sidebar {
+        min-height: auto;
+        display: grid;
+        grid-template-columns: 1fr auto;
+      }
+
+      .brand { border-bottom: 0; }
+      .brand h1 { margin-top: 15px; font-size: 34px; }
+      .side-section { display: none; }
+      .side-meta {
+        display: flex;
+        align-items: center;
+        padding: 24px 20px;
+      }
+      .side-meta p { display: none; }
+      .topbar { min-height: 48px; }
+      .content { padding-top: 32px; }
+      .output-panel { position: static; }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell { padding: 10px; gap: 14px; }
+      .sidebar { grid-template-columns: 1fr; }
+      .brand { padding: 18px; }
+      .brand h1 { margin-top: 15px; }
+      .side-meta { position: absolute; top: 25px; right: 20px; padding: 0; }
+      .topbar { padding: 0 4px; }
+      .topbar-label { display: none; }
+      .content { padding: 27px 0 18px; }
+      .intro {
+        display: block;
+        margin-bottom: 22px;
+      }
+      .intro h2 { font-size: clamp(50px, 17vw, 76px); }
+      .intro-copy { max-width: 360px; margin-top: 14px; }
+      .workbench { grid-template-columns: 1fr; }
+      .source-panel { min-height: auto; }
+      .panel-header { padding: 0 15px; }
+      .source-body, .output-body { padding: 15px; }
+      .dropzone, .preview { min-height: 270px; height: 270px; }
+      .file-row { gap: 12px; }
+      .privacy-bar { margin-top: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Format Press navigation">
+      <div class="brand">
+        <div class="brand-mark">Format Press</div>
+        <h1>Meta<br>Frame</h1>
+        <p>Local JPEG preparation for Ray-Ban Meta capture.</p>
+      </div>
+
+      <section class="side-section">
+        <p class="eyebrow">Workflow</p>
+        <ol class="workflow">
+          <li class="active" id="stepLoad"><span class="step-number">01</span><span>Load source</span></li>
+          <li id="stepInspect"><span class="step-number">02</span><span>Inspect frame</span></li>
+          <li id="stepStamp"><span class="step-number">03</span><span>Stamp output</span></li>
+        </ol>
+      </section>
+
+      <div class="side-meta">
+        <div>
+          <div class="local-status"><span class="status-dot"></span> Local processing</div>
+          <p>No image leaves this browser. Metadata is rewritten in memory.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-label">Workspace / Converter</span>
+        </div>
+        <div class="topbar-right">
+          <span class="local-label"><span class="status-dot"></span> Ready</span>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="intro">
+          <div>
+            <div class="intro-badge">
+              <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8V5"/><path d="M12 19v-3"/><path d="M8 12H5"/><path d="M19 12h-3"/></svg>
+              <span>Gyro-tilt <em>POV</em> — Instagram Story ready</span>
+            </div>
+            <h2>Make the frame<br>ready to ship.</h2>
+          </div>
+          <p class="intro-copy">Convert a JPG to the 3024 × 4032 Meta format, correct its gyro-tilt orientation, and strip private location data. Perfect for testing — or posting that cool Ray-Ban Meta glasses POV as an Instagram Story (portrait, full-screen, no crop).</p>
+        </section>
+
+        <div class="workbench">
+          <section class="panel source-panel" aria-labelledby="sourceTitle">
+            <div class="panel-header">
+              <h3 class="panel-title" id="sourceTitle">Source frame</h3>
+              <span class="panel-index">INPUT / 01</span>
+            </div>
+            <div class="source-body">
+              <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="Select a JPG or JPEG image">
+                <div class="drop-content" id="dropContent">
+                  <div class="upload-icon" aria-hidden="true">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 14v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg>
+                  </div>
+                  <strong>Drop a JPG here</strong>
+                  <span>or <button class="text-button" id="selectText" type="button">browse your photo library</button><br>JPG and JPEG only</span>
+                </div>
+                <div class="preview-wrap" id="previewWrap">
+                  <img class="preview" id="preview" alt="Selected source preview">
+                  <div class="preview-chip"><span class="status-dot"></span><span id="previewLabel">Source ready</span></div>
+                </div>
+              </div>
+
+              <div class="file-row">
+                <div class="file-detail">
+                  <div class="file-name" id="fileName">No source selected</div>
+                  <div class="file-meta" id="fileMeta">Waiting for a JPG / JPEG image</div>
+                </div>
+                <button class="file-change" id="changeBtn" type="button">Change</button>
+              </div>
+
+              <div class="source-tools">
+                <button class="source-tool" id="cameraBtn" type="button">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                  Use camera
+                </button>
+                <button class="source-tool" id="libraryBtn" type="button">
+                  <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-4-4L7 20"/></svg>
+                  Photo library
+                </button>
+              </div>
+
+              <input class="file-input" id="fileInput" type="file" accept="image/jpeg,.jpg,.jpeg">
+              <input class="camera-input" id="cameraInput" type="file" accept="image/jpeg,.jpg,.jpeg" capture="environment">
+            </div>
+          </section>
+
+          <section class="panel output-panel" aria-labelledby="outputTitle">
+            <div class="panel-header">
+              <h3 class="panel-title" id="outputTitle">Output</h3>
+              <span class="panel-index">TARGET / 02</span>
+            </div>
+            <div class="output-body">
+              <div class="output-state" id="outputState">
+                <div class="state-mark" id="stateMark">—</div>
+                <div>
+                  <strong id="stateTitle">Nothing stamped yet</strong>
+                  <span id="stateDescription">Load a source frame to unlock the converter.</span>
+                </div>
+              </div>
+
+              <dl class="specs">
+                <div class="spec-row"><dt>Dimensions</dt><dd>3024 × 4032 px</dd></div>
+                <div class="spec-row"><dt>Format</dt><dd>JPEG / 95%</dd></div>
+                <div class="spec-row"><dt>Orientation</dt><dd id="orientationValue">Corrected</dd></div>
+                <div class="spec-row"><dt>Private EXIF</dt><dd id="exifValue">Removed</dd></div>
+                <div class="spec-row"><dt>File size</dt><dd id="sizeValue">—</dd></div>
+                <div class="spec-row"><dt>Base64</dt><dd id="base64Value">Unavailable</dd></div>
+              </dl>
+
+              <div class="actions">
+                <button class="button primary" id="convertBtn" type="button" disabled>
+                  <svg class="icon" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"/></svg>
+                  <span id="convertText">Stamp output</span>
+                </button>
+                <button class="button secondary" id="copyBtn" type="button" disabled>
+                  <svg class="icon" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
+                  Copy Base64
+                </button>
+                <button class="button secondary" id="saveBtn" type="button" disabled>
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+                  Save / share
+                </button>
+              </div>
+              <p class="action-note">The stamped file includes Meta AI / Ray-Ban device tags and has GPS data removed.</p>
+            </div>
+            <div class="status" id="status" role="status" aria-live="polite"></div>
+          </section>
+        </div>
+
+        <div class="privacy-bar">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span>Private by default — image processing happens locally in your browser.</span>
+        </div>
+
+        <footer class="disclaimer-footer" role="contentinfo" aria-label="Testing disclaimer">
+          <strong>Testing-purpose disclaimer</strong><br>
+          This project is for testing / educational purposes only. It is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc., Ray-Ban, EssilorLuxottica, or any of their affiliates. We do not represent Meta and are not trying to impersonate Meta or its products. “Meta”, “Ray-Ban Meta” and related marks are trademarks of their respective owners. No data is sent to any server — all conversion happens locally in your browser.
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const dropZone = $("dropZone");
+    const dropContent = $("dropContent");
+    const previewWrap = $("previewWrap");
+    const preview = $("preview");
+    const previewLabel = $("previewLabel");
+    const fileInput = $("fileInput");
+    const cameraInput = $("cameraInput");
+    const fileName = $("fileName");
+    const fileMeta = $("fileMeta");
+    const convertBtn = $("convertBtn");
+    const convertText = $("convertText");
+    const copyBtn = $("copyBtn");
+    const saveBtn = $("saveBtn");
+    const status = $("status");
+    const outputState = $("outputState");
+    const stateMark = $("stateMark");
+    const stateTitle = $("stateTitle");
+    const stateDescription = $("stateDescription");
+    const sizeValue = $("sizeValue");
+    const base64Value = $("base64Value");
+    const orientationValue = $("orientationValue");
+    const exifValue = $("exifValue");
+
+    let sourceDataUrl = null;
+    let finalDataUrl = null;
+    let pureBase64 = null;
+    let sourceFile = null;
+
+    function openLibrary() { fileInput.click(); }
+    function openCamera() { cameraInput.click(); }
+
+    $("selectText").addEventListener("click", (event) => {
+      event.stopPropagation();
+      openLibrary();
+    });
+    $("changeBtn").addEventListener("click", openLibrary);
+    $("libraryBtn").addEventListener("click", openLibrary);
+    $("cameraBtn").addEventListener("click", openCamera);
+    dropZone.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      openLibrary();
+    });
+    dropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openLibrary();
+      }
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropZone.classList.add("dragging");
+      });
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("dragging");
+      });
+    });
+    dropZone.addEventListener("drop", (event) => {
+      const file = event.dataTransfer.files?.[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files?.[0]) handleFile(fileInput.files[0]);
+      fileInput.value = "";
+    });
+    cameraInput.addEventListener("change", () => {
+      if (cameraInput.files?.[0]) handleFile(cameraInput.files[0]);
+      cameraInput.value = "";
+    });
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function handleFile(file) {
+      if (file.type !== "image/jpeg" && !/\.jpe?g$/i.test(file.name)) {
+        showStatus("Please choose a JPG or JPEG image.", "error");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        sourceFile = file;
+        sourceDataUrl = event.target.result;
+        finalDataUrl = null;
+        pureBase64 = null;
+
+        preview.src = sourceDataUrl;
+        previewLabel.textContent = "Source ready";
+        previewWrap.classList.add("visible");
+        dropContent.style.display = "none";
+        dropZone.classList.add("has-preview");
+        fileName.textContent = file.name || "Selected photo";
+        fileMeta.textContent = `${formatBytes(file.size)} · Ready to inspect`;
+        convertBtn.disabled = false;
+        convertText.textContent = "Stamp output";
+        copyBtn.disabled = true;
+        saveBtn.disabled = true;
+        outputState.classList.remove("ready");
+        stateMark.textContent = "—";
+        stateTitle.textContent = "Ready to stamp";
+        stateDescription.textContent = "Orientation and private metadata will be normalized.";
+        sizeValue.textContent = "—";
+        base64Value.textContent = "Unavailable";
+        base64Value.classList.remove("ready");
+        setStepState("loaded");
+        hideStatus();
+      };
+      reader.onerror = () => showStatus("Could not read that image. Try another JPG.", "error");
+      reader.readAsDataURL(file);
+    }
+
+    function setStepState(state) {
+      const steps = [$("stepLoad"), $("stepInspect"), $("stepStamp")];
+      steps.forEach((step) => step.classList.remove("active", "done"));
+      if (state === "loaded") {
+        steps[0].classList.add("done");
+        steps[1].classList.add("active");
+      } else if (state === "stamped") {
+        steps[0].classList.add("done");
+        steps[1].classList.add("done");
+        steps[2].classList.add("active");
+      } else {
+        steps[0].classList.add("active");
+      }
+    }
+
+    function showStatus(message, type = "success", loading = false) {
+      status.className = `status visible ${type}`;
+      status.innerHTML = loading
+        ? `<span class="spinner" aria-hidden="true"></span><span>${message}</span>`
+        : `<span aria-hidden="true">${type === "success" ? "✓" : "!"}</span><span>${message}</span>`;
+    }
+
+    function hideStatus() {
+      status.className = "status";
+      status.textContent = "";
+    }
+
+    function readOrientation(dataUrl) {
+      try {
+        const exif = piexif.load(dataUrl);
+        return exif["0th"][piexif.ImageIFD.Orientation] || 1;
+      } catch {
+        return 1;
+      }
+    }
+
+    function drawCorrected(dataUrl, targetW, targetH, orientation) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const rotated = orientation >= 5 && orientation <= 8;
+          canvas.width = rotated ? targetH : targetW;
+          canvas.height = rotated ? targetW : targetH;
+          const context = canvas.getContext("2d");
+          if (!context) {
+            reject(new Error("Canvas is unavailable"));
+            return;
+          }
+
+          switch (orientation) {
+            case 2: context.setTransform(-1, 0, 0, 1, targetW, 0); break;
+            case 3: context.setTransform(-1, 0, 0, -1, targetW, targetH); break;
+            case 4: context.setTransform(1, 0, 0, -1, 0, targetH); break;
+            case 5: context.setTransform(0, 1, 1, 0, 0, 0); break;
+            case 6: context.setTransform(0, 1, -1, 0, targetH, 0); break;
+            case 7: context.setTransform(0, -1, -1, 0, targetH, targetW); break;
+            case 8: context.setTransform(0, -1, 1, 0, 0, targetW); break;
+            default: context.setTransform(1, 0, 0, 1, 0, 0);
+          }
+          context.drawImage(image, 0, 0, targetW, targetH);
+          resolve(canvas.toDataURL("image/jpeg", .95));
+        };
+        image.onerror = () => reject(new Error("Image could not be decoded"));
+        image.src = dataUrl;
+      });
+    }
+
+    function buildExif(dataUrl) {
+      let exif;
+      try {
+        exif = piexif.load(dataUrl);
+      } catch {
+        exif = { "0th": {}, "Exif": {}, "GPS": {}, "1st": {}, thumbnail: null };
+      }
+      exif.GPS = {};
+      delete exif["0th"][piexif.ImageIFD.Software];
+      delete exif["0th"][piexif.ImageIFD.HostComputer];
+      delete exif.Exif[piexif.ExifIFD.MakerNote];
+      delete exif.Exif[piexif.ExifIFD.LensMake];
+      delete exif.Exif[piexif.ExifIFD.LensModel];
+      delete exif.Exif[piexif.ExifIFD.LensSpecification];
+      exif["0th"][piexif.ImageIFD.Make] = "Meta AI";
+      exif["0th"][piexif.ImageIFD.Model] = "Ray-Ban Meta Smart Glasses 2";
+      exif["0th"][piexif.ImageIFD.Orientation] = 1;
+      exif.Exif[piexif.ExifIFD.ColorSpace] = 1;
+      exif.Exif[piexif.ExifIFD.PixelXDimension] = 3024;
+      exif.Exif[piexif.ExifIFD.PixelYDimension] = 4032;
+      return exif;
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const [header, encoded] = dataUrl.split(",");
+      const mime = header.match(/:(.*?);/)?.[1] || "image/jpeg";
+      const binary = atob(encoded);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return new Blob([bytes], { type: mime });
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      if (!document.execCommand("copy")) throw new Error("Copy failed");
+      textarea.remove();
+    }
+
+    async function saveOrShareImage(dataUrl, filename = "meta-glasses-converted.jpg") {
+      const blob = dataUrlToBlob(dataUrl);
+      const file = new File([blob], filename, { type: "image/jpeg" });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Meta Frame",
+            text: "Converted Ray-Ban Meta image"
+          });
+          return "shared";
+        } catch (error) {
+          if (error.name === "AbortError") return "cancelled";
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      return "downloaded";
+    }
+
+    async function convertImage() {
+      const orientation = readOrientation(sourceDataUrl);
+      const corrected = await drawCorrected(sourceDataUrl, 3024, 4032, orientation);
+      const exifBytes = piexif.dump(buildExif(sourceDataUrl));
+      finalDataUrl = piexif.insert(exifBytes, corrected);
+      pureBase64 = finalDataUrl.split(",")[1];
+      return { orientation };
+    }
+
+    convertBtn.addEventListener("click", async () => {
+      if (!sourceDataUrl) return;
+      convertBtn.disabled = true;
+      copyBtn.disabled = true;
+      saveBtn.disabled = true;
+      convertText.textContent = "Stamping…";
+      showStatus("Normalizing orientation and writing output metadata…", "loading", true);
+
+      try {
+        const { orientation } = await convertImage();
+        preview.src = finalDataUrl;
+        previewLabel.textContent = "Output ready";
+        outputState.classList.add("ready");
+        stateMark.textContent = "✓";
+        stateTitle.textContent = "Output stamped";
+        stateDescription.textContent = "Your converted frame is ready to copy or save.";
+        orientationValue.textContent = orientation === 1 ? "Already correct" : "Corrected";
+        exifValue.textContent = "Clean + stamped";
+        sizeValue.textContent = formatBytes(dataUrlToBlob(finalDataUrl).size);
+        base64Value.textContent = "Available";
+        base64Value.classList.add("ready");
+        copyBtn.disabled = false;
+        saveBtn.disabled = false;
+        convertBtn.disabled = false;
+        convertText.textContent = "Stamp again";
+        setStepState("stamped");
+        showStatus("Output ready. GPS and private lens metadata were removed.", "success");
+      } catch (error) {
+        console.error(error);
+        convertBtn.disabled = false;
+        convertText.textContent = "Try again";
+        showStatus("Conversion failed. Try another JPG image.", "error");
+      }
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      if (!pureBase64) return;
+      try {
+        await copyText(pureBase64);
+        showStatus("Base64 copied to your clipboard.", "success");
+      } catch {
+        showStatus("Clipboard access was blocked by this browser.", "error");
+      }
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      if (!finalDataUrl) return;
+      try {
+        const result = await saveOrShareImage(finalDataUrl);
+        if (result === "cancelled") {
+          showStatus("Share cancelled. Your output is still ready.", "success");
+        } else {
+          showStatus(result === "shared" ? "Share sheet opened." : "Download started.", "success");
+        }
+      } catch {
+        showStatus("Could not save this output in the current browser.", "error");
+      }
+    });
+  </script>
+</body>
+</html>
