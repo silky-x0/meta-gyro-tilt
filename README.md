@@ -5,9 +5,9 @@
 
 Converts any JPG/JPEG to the **3024 × 4032 px, 95% JPEG** portrait format used by Ray-Ban Meta capture — corrects EXIF gyro/tilt orientation, resizes, strips private GPS/metadata, and stamps device tags — entirely in your browser.
 
-**Bonus:** the output is the perfect `3:4` portrait for a **cool Instagram Story with that authentic Ray-Ban Meta glasses POV** — gyro-corrected, full-screen, no black bars. Shoot → Stamp → Share to Stories.
-
 ![Meta Gyro Tilt — Format Press preview](assets/meta-gyro.png)
+
+**Bonus:** the output is the perfect `3:4` portrait for a **cool Instagram Story with that authentic Ray-Ban Meta glasses POV** — gyro-corrected, full-screen, no black bars. Shoot → Stamp → Share to Stories.
 
 ---
 
