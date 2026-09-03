@@ -190,18 +190,26 @@ Output specs update in the right panel (`index.html:859-866`, refreshed at `inde
 
 ```
 meta-gyro-tilt/
-├── index.html   # All-in-one: <style> design system + <script> app logic
+├── index.html   # Zero-build demo — inline <style> + <script> (single file, open & run)
+├── style.css    # Extracted styles from index.html for lint/maintainability (mirrors inline)
+├── app.js       # Extracted JS (@ts-check, JSDoc) — same logic as inline
+├── manifest.json# PWA manifest (standalone, theme #171716, icons via data URI)
+├── sw.js        # Service worker — caches piexifjs + fonts, never images
+├── LICENSE      # MIT + testing-only disclaimer
+├── .editorconfig / .prettierrc
 └── README.md
 ```
 
-No `package.json`, no `node_modules`, no build. The app is intentionally a single file for auditability and portability.
+No `package.json`, no `node_modules`, no build required. `index.html` remains single-file for auditability; `style.css`/`app.js` are provided for maintainable workflows (lint, type-check). All images stay 100% local.
 
 ## Tech Stack
 
 *   **HTML5 + CSS3**: custom design system (see [Design System](#design-system)), no framework.
-*   **Vanilla JS (ES2020)**: `FileReader`, `Canvas 2D`, `Blob`/`File`/`URL.createObjectURL`, Web Share, Clipboard.
-*   **piexifjs 1.0.6** via cdnjs (`index.html:12`): EXIF read/dump/insert. Only external dep.
+*   **Vanilla JS (ES2020, `@ts-check` + JSDoc)**: `FileReader`, `Canvas 2D` (`toBlob` async, `setTransform` for 8 orientations, manual `±15°` tilt), `Blob`/`File`/`URL.createObjectURL`, Web Share, Clipboard, `localStorage` for consent.
+*   **piexifjs 1.0.6** via cdnjs with **SRI** `sha384-yk/k1…` (`index.html:12`) + `onerror` fallback to `unpkg` — EXIF read/dump/insert.
+*   **PWA**: `manifest.json` + `sw.js` (stale-while-revalidate for CDN, never caches images).
 *   **Fonts**: `Bebas Neue` (display) + `Barlow` (body) via Google Fonts (`index.html:11`).
+*   **Tooling**: `.editorconfig` + `.prettierrc`, `// @ts-check` in `app.js` (run `tsc --allowJs --checkJs`).
 
 ## Getting Started
 
@@ -224,7 +232,11 @@ npx http-server -p 8000
 
 ### CDN note
 
-First load fetches `piexifjs` and Google Fonts from CDN. After that, image processing is offline. For fully offline, self-host `piexif.js` and replace the `<script>`/`<link>` tags.
+First load fetches `piexifjs` (with SRI) and Google Fonts from CDN. After that, `sw.js` caches them — subsequent loads work offline. For fully offline/air-gapped, self-host `piexif.js` and update `sw.js` `ASSETS` + replace `<script>` in `index.html`.
+
+### PWA install
+
+On Chrome/Edge/Android, you’ll see **Install** in the address bar (thanks to `manifest.json` + `sw.js`). Installed, the app opens standalone (`display: standalone`, `theme #171716`) and works without network after first load — ideal for field testing.
 
 ## Usage Guide
 
@@ -244,36 +256,41 @@ Keyboard: dropzone is `role="button"` + `tabindex="0"` — focus and press `Ente
 
 | Function | Location | Purpose |
 | :--- | :--- | :--- |
-| `formatBytes()` | `index.html:978-982` | Human-readable file size |
-| `handleFile(file)` | `index.html:984-1020` | Validate, read, preview, reset output state |
-| `setStepState(state)` | `index.html:1022-1035` | Toggle `active`/`done` on workflow steps |
-| `showStatus(msg,type,loading)` | `index.html:1037-1042` | Status bar (success/error/loading + spinner) |
-| `readOrientation(dataUrl)` | `index.html:1049-1056` | EXIF orientation → 1–8 |
-| `drawCorrected(...)` | `index.html:1058-1088` | Canvas transform + resize → JPEG DataURL |
-| `buildExif(dataUrl)` | `index.html:1090-1111` | Strip private tags, stamp Meta tags |
-| `dataUrlToBlob(dataUrl)` | `index.html:1113-1120` | Base64 → Blob for size/share |
-| `copyText(text)` | `index.html:1122-1136` | Clipboard with fallback |
-| `saveOrShareImage(dataUrl)` | `index.html:1138-1160` | Web Share → download fallback |
-| `convertImage()` | `index.html:1162-1169` | Orchestrates above 3 steps |
+| `formatBytes()` | `index.html:1476` | Human-readable file size |
+| `handleFile(file)` | `index.html:1482` | Validate (type + 15 MB), backup for undo, `FileReader` → preview, reset `finalDataUrl` |
+| `setStepState(state)` | `index.html:1531` | Toggle `active`/`done` on workflow steps |
+| `showStatus(msg,type,loading)` | `index.html:1540` | Status bar + `aria-live` (`#dropStatus`) + `lastError` |
+| `readOrientation(dataUrl)` | `index.html:1558` | EXIF `Orientation` 1–8 via `piexif` |
+| `blobToDataURL(blob)` | `index.html:1567` | `Blob` → `DataURL` (for `piexif` after `toBlob`) |
+| `drawCorrected(...,fitMode,tiltDeg)` | `index.html:1586` | Canvas `setTransform` for 8 orientations + `translate/rotate` for `tiltDeg` + `cover/contain/stretch` + `toBlob` |
+| `getExportDimensions()` | `index.html:1660` | `meta 3024×4032` vs `story 1080×1920` |
+| `buildExif(dataUrl,w,h)` | `index.html:1664` | Strip `GPS`/`Software`/… stamp `Make/Model/Orientation` + `PixelX/YDimension = w/h` |
+| `dataUrlToBlob(dataUrl)` | `index.html:1683` | Base64 → `Blob` for size/share |
+| `copyText(text)` | `index.html:1692` | Clipboard with `execCommand` fallback |
+| `saveOrShareImage(dataUrl,fname)` | `index.html:1708` | Web Share → download fallback (`URL.createObjectURL`) |
+| `convertImage()` | `index.html:1737` | Orchestrates `readOrientation → drawCorrected → piexif.dump/insert` with granular errors |
+| `initControls()` | `index.html:1345` | Preset toggle, `fitMode` segmented, `tiltRange` ±15°, `safeOverlay`, `revertBtn`, live CSS preview |
+| `initConsent()` | `index.html:1310` | First-visit modal gate (`localStorage.formatPressConsent`) |
 
-State lives in 4 module globals at `index.html:926-929`: `sourceDataUrl`, `finalDataUrl`, `pureBase64`, `sourceFile`.
+State globals at `index.html:1286-1294`: `sourceDataUrl`, `finalDataUrl`, `pureBase64`, `sourceFile`, `sourceDataUrlBackup`, `fitMode='cover'`, `tiltDeg=0`, `exportPreset='meta'`, `MAX_FILE_SIZE`.
 
 ## Privacy & Security
 
-*   **Local-only**: `FileReader` + `Canvas` + `piexif` all run in-memory. No `fetch`/`XHR` sends image data anywhere. Verified — search `index.html` for `fetch` → no matches.
+*   **Local-only**: `FileReader` + `Canvas` + `piexif` all run in-memory. No `fetch`/`XHR` sends image data anywhere. Verified — search `index.html` for `fetch` → no matches (only CDN loads).
 *   **GPS stripped**: `exif.GPS = {}` guarantees no lat/long leaks into output.
 *   **Private tags removed**: see table in [Step 4](#4-exif-rebuilding-indexhtml1090-1111).
-*   **No storage**: no `localStorage`/`IndexedDB`; refresh clears state.
-*   **CDN risk**: only external load is `piexifjs` + Google Fonts. For air-gapped use, vendor them.
+*   **Minimal storage**: only `localStorage.formatPressConsent` (first-visit modal). No image storage; refresh clears `sourceDataUrl`/`finalDataUrl`/`pureBase64`. No `IndexedDB`.
+*   **CDN hardening**: `piexifjs` loaded with **SRI** `sha384-…` + `crossorigin="anonymous"` + `onerror` fallback (`index.html:12`). For air-gapped, self-host `piexif.js` and replace `<script>` + update `sw.js` `ASSETS`.
+*   **`noindex`**: `<meta name="robots" content="noindex, nofollow">` + OG `noindex` intent reduces impersonation SEO risk.
 
 ## Design System
 
 Defined at `index.html:14-34`:
 
-*   **Palette**: `coal-950 #111110` → `coal-750 #2b2b28`, `bone #f1efe7` / `bone-muted #8e8c84`, `ember #ef6b3d` (accent), `green #7cbe8b` (success), `red #f0786b` (error).
+*   **Palette**: `coal-950 #111110` → `coal-750 #2b2b28`, `bone #f1efe7` / `bone-muted #8e8c84`, `ember #ef6b3d` (accent), `green #7cbe8b` (success), `red #f0786b` (error). Contrast: body `15px` AA, footer bumped to `12px/1.7` `bone-soft` (`index.html:676-690`) for readability.
 *   **Type**: `Bebas Neue` for display (`--display`), `Barlow` for body (`--body`).
 *   **Layout**: `app-shell` grid `224px + 1fr` (`index.html:72-80`), collapses to single column at `900px`/`640px` (`index.html:703-751`).
-*   **Components**: `.disclaimer-footer` (`index.html:676-690`), `.dropzone` (dashed → solid + ember on drag/hover), `.panel`, `.button.primary` (ember) / `.secondary` (coal), `.intro-badge` (`index.html:272-291`).
+*   **Components**: `.disclaimer-footer` (`index.html:676-690`), `.dropzone` (dashed → solid + ember, `.error` shake at `index.html:334`), `.panel`, `.button.primary` (ember) / `.secondary` (coal), `.intro-badge` (`index.html:272-291`), `.controls` + `.segmented`/`.preset-toggle`/`.range-wrap`, `.safe-overlay` (Instagram safe-area, `index.html:360-400`), `.modal-overlay` (`index.html:692-770`), `.sr-only` for screen readers.
 
 ## Browser Support
 
@@ -281,21 +298,39 @@ Defined at `index.html:14-34`:
 *   Requires: `Canvas 2D`, `FileReader.readAsDataURL`, `atob`/`Blob`. All baseline.
 *   Optional (gracefully degraded): `navigator.clipboard.writeText` (falls back to `execCommand`), `navigator.canShare`/`navigator.share` (falls back to download), `capture="environment"` (ignored on desktop).
 
+## Improvements Shipped (vs. initial single-file)
+
+All items from the earlier audit are now implemented:
+
+| Area | Before → After |
+| :--- | :--- |
+| **Security** | No SRI → `integrity="sha384-…"` + `onerror` fallback to `unpkg`; added `robots noindex`, OG/twitter, favicon via data URI |
+| **Reliability** | No size check → `MAX_FILE_SIZE 15 MB` guard + `.dropzone.error` shake (`index.html:334`) + granular `Canvas/EXIF` errors |
+| **Performance** | `toDataURL` (sync) → `toBlob` + `blobToDataURL` (`index.html:1180-1191`), lower peak memory |
+| **UX** | No undo → `Revert to source` (`#revertBtn`); no fit control → `Cover/Contain/Stretch` (`fitMode`); no tilt → `±15°` slider (`#tiltRange`) with CSS live preview; `1080×1920` Story preset + `Safe-area overlay` (`#safeOverlay`); first-visit `consentModal` with `localStorage` |
+| **Accessibility** | `bone-muted` 11px → `bone-soft` 12px/1.7 footer, `sr-only` live region (`#dropStatus`), `aria-describedby`/`aria-pressed`/`aria-dropeffect`, `prefers-reduced-motion` ready |
+| **PWA** | No offline → `manifest.json` + `sw.js` (caches CDN, never images) + `register` at `index.html:1840` |
+| **Maintainability** | Single file only → `style.css`/`app.js` extracted + `// @ts-check` + `.editorconfig`/`.prettierrc`; `LICENSE` MIT + disclaimer |
+
 ## Limitations
 
 *   **JPEG only** — PNG/WebP/HEIC rejected by design (Meta pipeline is JPEG).
-*   **No crop control** — image is stretched to exactly `3024×4032` via `drawImage(image,0,0,3024,4032)`; no letterboxing or smart crop.
-*   **One image at a time** — no batch.
-*   **EXIF subset** — only the tags listed above are handled; other APP segments (ICC, XMP) are discarded on re-encode.
-*   **Memory**: large JPEGs are held as base64 strings + canvas bitmaps — very large files (e.g., 50 MP) may hit browser memory limits.
+*   **One image at a time** — no batch (roadmap: queue + ZIP).
+*   **EXIF subset** — only tags in `buildExif` are handled; ICC/XMP discarded on re-encode.
+*   **Memory**: capped at 15 MB input; very large files (50 MP) still capped to prevent OOM — compress first.
 
 ## Roadmap
 
-*   [ ] Optional letterbox vs stretch toggle
+*   [x] Cover/Contain/Stretch toggle — **done** (`fitMode`)
+*   [x] 1080×1920 Story preset — **done** (`exportPreset`)
+*   [x] Gyro tilt slider ±15° — **done** (`tiltDeg`)
+*   [x] Safe-area overlay — **done**
+*   [x] PWA offline — **done**
+*   [x] SRI + consent modal — **done**
 *   [ ] Batch queue + ZIP export
-*   [ ] Self-hosted `piexifjs` + no-CDN mode
-*   [ ] PWA wrapper for offline install
 *   [ ] Preserve ICC profile option
+*   [ ] Drag-to-reposition for Cover crop
+*   [ ] WebGL filter (vintage glass look)
 
 ## Trademark & License
 

@@ -1,0 +1,25 @@
+{
+  "name": "Format Press — Ray-Ban Meta Converter",
+  "short_name": "FormatPress",
+  "description": "Local JPEG converter: gyro-tilt correction, 3024×4032 Meta format, GPS stripped, Instagram Story-ready POV. 100% in-browser, testing only.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#111110",
+  "theme_color": "#171716",
+  "orientation": "portrait",
+  "categories": ["photo", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='24' fill='%23171716'/%3E%3Crect x='64' y='64' width='64' height='64' fill='%23ef6b3d'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='64' fill='%23171716'/%3E%3Crect x='160' y='160' width='192' height='192' fill='%23ef6b3d'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

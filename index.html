@@ -4,12 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171716">
-  <meta name="description" content="Format Press — local JPEG conversion for Ray-Ban Meta photos.">
-  <title>Format Press — Ray-Ban Meta Converter</title>
+  <meta name="description" content="Format Press — local JPEG conversion for Ray-Ban Meta photos. Correct gyro-tilt, stamp to 3024×4032, strip GPS, share as Instagram Story POV — 100% in-browser.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta property="og:title" content="Format Press — Ray-Ban Meta Converter">
+  <meta property="og:description" content="Local JPEG converter: gyro-tilt correction, 3024×4032 Meta format, GPS stripped, Instagram Story-ready POV. No upload, testing only.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%23111110'/%3E%3Ctext x='60' y='120' fill='%23ef6b3d' font-family='Arial' font-size='48' font-weight='700' letter-spacing='8'%3EFORMAT PRESS%3C/text%3E%3Ctext x='60' y='280' fill='%23f1efe7' font-family='Arial' font-size='96' font-weight='400'%3EMeta Frame%3C/text%3E%3Ctext x='60' y='340' fill='%238e8c84' font-family='Arial' font-size='28'%3E3024×4032 • Gyro-tilt • Story-ready • Local only%3C/text%3E%3C/svg%3E">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Format Press — Ray-Ban Meta Converter">
+  <meta name="twitter:description" content="Convert any JPG to Ray-Ban Meta 3024×4032 with gyro correction — share as Instagram Story POV. 100% local, testing only.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23171716'/%3E%3Crect x='8' y='8' width='8' height='8' fill='%23ef6b3d'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.6/piexif.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.6/piexif.js" integrity="sha384-yk/k1j9hKtYh4LJRX0d6o3pO9c8h4lp2IMnWdamQhThRA2Z9B0YNDeGKyDmPXnnJ" crossorigin="anonymous" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/piexifjs@1.0.6/piexif.js';s.onload=function(){console.log('piexif fallback loaded')};document.head.appendChild(s)"></script>
   <style>
     :root {
       color-scheme: dark;
@@ -290,6 +299,212 @@
       font-style: normal;
     }
 
+    .controls {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+      padding: 14px;
+      background: var(--coal-850);
+      border: 1px solid var(--line);
+    }
+
+    .control-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--bone-muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .control-label span { color: var(--bone-soft); font-size: 11px; letter-spacing: .02em; text-transform: none; font-weight: 600; }
+    .control-label em { color: var(--ember-bright); font-style: normal; }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: var(--coal-900);
+      border: 1px solid var(--line);
+    }
+
+    .segmented button {
+      min-height: 32px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--bone-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .segmented button.active {
+      background: var(--ember);
+      border-color: var(--ember);
+      color: #21110b;
+    }
+
+    .segmented button:hover:not(.active) {
+      color: var(--bone);
+      border-color: var(--line-strong);
+    }
+
+    .preset-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: var(--coal-900);
+      border: 1px solid var(--line);
+    }
+
+    .preset-toggle button {
+      min-height: 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--bone-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .preset-toggle button small {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--bone-muted);
+    }
+
+    .preset-toggle button.active {
+      background: var(--coal-800);
+      border-color: var(--ember);
+      color: var(--bone);
+    }
+
+    .preset-toggle button.active small { color: var(--bone-soft); }
+
+    .range-wrap {
+      display: grid;
+      gap: 6px;
+    }
+
+    .range-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .range-head output {
+      min-width: 44px;
+      text-align: right;
+      color: var(--ember-bright);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      appearance: none;
+      background: var(--line-strong);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--ember);
+      border: 2px solid var(--coal-900);
+      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--ember);
+      border: 2px solid var(--coal-900);
+      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+      cursor: pointer;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--bone-soft);
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-row input { accent-color: var(--ember); width: 14px; height: 14px; }
+
+    .safe-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      border: 1px dashed rgba(239,107,61,.45);
+    }
+
+    .safe-overlay.visible { display: block; }
+
+    .safe-overlay::before,
+    .safe-overlay::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 18%;
+      background: repeating-linear-gradient( -45deg, rgba(239,107,61,.08) 0 6px, transparent 6px 12px);
+      border: 1px dashed rgba(239,107,61,.35);
+    }
+
+    .safe-overlay::before { top: 0; border-bottom-style: solid; }
+    .safe-overlay::after { bottom: 0; border-top-style: solid; }
+
+    .safe-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 3px 7px;
+      background: rgba(17,17,16,.92);
+      border: 1px solid var(--line-strong);
+      color: var(--bone-muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .safe-label.top { top: 6px; }
+    .safe-label.bottom { bottom: 6px; }
+
     .workbench {
       display: grid;
       grid-template-columns: minmax(0, 1.5fr) minmax(280px, .85fr);
@@ -352,6 +567,18 @@
     .dropzone.has-preview {
       align-items: stretch;
       border-style: solid;
+    }
+
+    .dropzone.error {
+      border-color: var(--red);
+      background: #1f1412;
+      animation: shake .3s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
     }
 
     .drop-content {
@@ -671,6 +898,18 @@
 
     .privacy-bar .icon { color: var(--green); width: 15px; height: 15px; }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .camera-input, .file-input { display: none; }
 
     .disclaimer-footer {
@@ -679,9 +918,9 @@
       background: var(--coal-900);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      color: var(--bone-muted);
-      font-size: 11px;
-      line-height: 1.6;
+      color: var(--bone-soft);
+      font-size: 12px;
+      line-height: 1.7;
     }
 
     .disclaimer-footer strong {
@@ -690,6 +929,72 @@
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(8, 8, 7, .78);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      width: min(520px, 100%);
+      background: var(--coal-900);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 24px 48px rgba(0,0,0,.5);
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font: 400 26px var(--display);
+      letter-spacing: .02em;
+      color: var(--bone);
+    }
+
+    .modal p {
+      margin: 0 0 12px;
+      color: var(--bone-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .modal label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 16px 0;
+      padding: 12px;
+      background: var(--coal-850);
+      border: 1px solid var(--line);
+      color: var(--bone-soft);
+      font-size: 12px;
+      line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .modal input[type="checkbox"] {
+      margin-top: 2px;
+      accent-color: var(--ember);
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -800,7 +1105,7 @@
               <span class="panel-index">INPUT / 01</span>
             </div>
             <div class="source-body">
-              <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="Select a JPG or JPEG image">
+              <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="Select a JPG or JPEG image" aria-describedby="fileMeta dropStatus" aria-dropeffect="copy">
                 <div class="drop-content" id="dropContent">
                   <div class="upload-icon" aria-hidden="true">
                     <svg class="icon" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 14v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg>
@@ -811,9 +1116,14 @@
                 <div class="preview-wrap" id="previewWrap">
                   <img class="preview" id="preview" alt="Selected source preview">
                   <div class="preview-chip"><span class="status-dot"></span><span id="previewLabel">Source ready</span></div>
+                  <div class="safe-overlay" id="safeOverlay" aria-hidden="true">
+                    <span class="safe-label top">Instagram safe area</span>
+                    <span class="safe-label bottom">Swipe-up zone</span>
+                  </div>
                 </div>
               </div>
 
+              <span id="dropStatus" class="sr-only" aria-live="polite"></span>
               <div class="file-row">
                 <div class="file-detail">
                   <div class="file-name" id="fileName">No source selected</div>
@@ -853,13 +1163,50 @@
               </div>
 
               <dl class="specs">
-                <div class="spec-row"><dt>Dimensions</dt><dd>3024 × 4032 px</dd></div>
+                <div class="spec-row"><dt>Dimensions</dt><dd id="dimensionsValue">3024 × 4032 px</dd></div>
                 <div class="spec-row"><dt>Format</dt><dd>JPEG / 95%</dd></div>
                 <div class="spec-row"><dt>Orientation</dt><dd id="orientationValue">Corrected</dd></div>
                 <div class="spec-row"><dt>Private EXIF</dt><dd id="exifValue">Removed</dd></div>
                 <div class="spec-row"><dt>File size</dt><dd id="sizeValue">—</dd></div>
                 <div class="spec-row"><dt>Base64</dt><dd id="base64Value">Unavailable</dd></div>
               </dl>
+
+              <div class="controls" aria-label="Export controls">
+                <div class="control-row">
+                  <div class="control-label">Export preset <span id="presetHint">Meta 3:4</span></div>
+                  <div class="preset-toggle" role="group" aria-label="Export preset">
+                    <button type="button" id="presetMeta" class="active" aria-pressed="true">Meta<small>3024 × 4032</small></button>
+                    <button type="button" id="presetStory" aria-pressed="false">Story<small>1080 × 1920</small></button>
+                  </div>
+                  <p style="margin:0;color:var(--bone-muted);font-size:11px;line-height:1.4;">Meta = 3:4 lab frame • Story = 9:16 fills Instagram full-screen, no bars.</p>
+                </div>
+
+                <div class="control-row">
+                  <div class="control-label">Fit <span>how image fills frame</span></div>
+                  <div class="segmented" role="group" aria-label="Fit mode">
+                    <button type="button" data-fit="cover" class="active" aria-pressed="true">Cover</button>
+                    <button type="button" data-fit="contain" aria-pressed="false">Contain</button>
+                    <button type="button" data-fit="stretch" aria-pressed="false">Stretch</button>
+                  </div>
+                  <p style="margin:0;color:var(--bone-muted);font-size:11px;line-height:1.4;"><em>Cover</em> (recommended for Stories) crops center, <em>Contain</em> letterboxes, <em>Stretch</em> squashes.</p>
+                </div>
+
+                <div class="control-row">
+                  <div class="control-label">Gyro tilt <span id="tiltOut">0°</span></div>
+                  <div class="range-wrap">
+                    <div class="range-head">
+                      <span style="color:var(--bone-muted);font-size:11px;">−15°</span>
+                      <output id="tiltValue" for="tiltRange">0°</output>
+                      <span style="color:var(--bone-muted);font-size:11px;">+15°</span>
+                    </div>
+                    <input type="range" id="tiltRange" min="-15" max="15" step="1" value="0" aria-label="Gyro tilt nudge">
+                  </div>
+                  <p style="margin:0;color:var(--bone-muted);font-size:11px;line-height:1.4;">Nudge horizon ±15° after auto gyro correction — subtle tilt = authentic POV.</p>
+                </div>
+
+                <label class="check-row"><input type="checkbox" id="safeToggle"> Show Instagram safe-area overlay</label>
+                <label class="check-row"><input type="checkbox" id="revertCheck" style="display:none"><span id="revertLabel" style="display:none"></span></label>
+              </div>
 
               <div class="actions">
                 <button class="button primary" id="convertBtn" type="button" disabled>
@@ -874,8 +1221,12 @@
                   <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
                   Save / share
                 </button>
+                <button class="button secondary" id="revertBtn" type="button" style="display:none">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a4 4 0 1 1 0 8H11"/><path d="M12 8v4"/></svg>
+                  Revert to source
+                </button>
               </div>
-              <p class="action-note">The stamped file includes Meta AI / Ray-Ban device tags and has GPS data removed.</p>
+              <p class="action-note">The stamped file includes Meta AI / Ray-Ban device tags and has GPS data removed. Use <em>Cover</em> for Stories — no squash.</p>
             </div>
             <div class="status" id="status" role="status" aria-live="polite"></div>
           </section>
@@ -892,6 +1243,19 @@
         </footer>
       </div>
     </main>
+  </div>
+
+  <div class="modal-overlay" id="consentModal" role="dialog" aria-modal="true" aria-labelledby="consentTitle" aria-hidden="true">
+    <div class="modal">
+      <h2 id="consentTitle">Before you continue</h2>
+      <p><strong style="color: var(--bone);">This is a testing / lab tool — not Meta.</strong> We do not represent Meta Platforms, Inc. or Ray-Ban, and we are not trying to impersonate them. Output is stamped with <code style="color: var(--bone-soft);">Meta AI / Ray-Ban Meta Smart Glasses 2</code> only for testing pipelines.</p>
+      <p>All images stay in your browser. No upload, no tracking. “Meta” and “Ray-Ban” are trademarks of their owners.</p>
+      <label><input type="checkbox" id="consentCheck"> <span>I understand this is unofficial, for testing only, and I am responsible for how I share stamped images (e.g., Instagram Stories).</span></label>
+      <div class="modal-actions">
+        <button class="button secondary" id="consentClose" type="button" disabled>Continue to Format Press</button>
+      </div>
+      <p style="font-size: 11px; color: var(--bone-muted); margin-top: 10px;">Consent saved in <code>localStorage.formatPressConsent</code>. Clear site data to see again.</p>
+    </div>
   </div>
 
   <script>
@@ -918,11 +1282,149 @@
     const base64Value = $("base64Value");
     const orientationValue = $("orientationValue");
     const exifValue = $("exifValue");
+    const dimensionsValue = $("dimensionsValue");
+    const presetMeta = $("presetMeta");
+    const presetStory = $("presetStory");
+    const presetHint = $("presetHint");
+    const tiltRange = $("tiltRange");
+    const tiltValue = $("tiltValue");
+    const tiltOut = $("tiltOut");
+    const safeToggle = $("safeToggle");
+    const safeOverlay = $("safeOverlay");
+    const revertBtn = $("revertBtn");
+    const dropStatus = $("dropStatus");
 
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB guard — prevents OOM on 3024×4032 canvas + 2 base64 copies
     let sourceDataUrl = null;
     let finalDataUrl = null;
     let pureBase64 = null;
     let sourceFile = null;
+    let sourceDataUrlBackup = null; // for undo/revert
+    let fitMode = 'cover'; // 'cover' | 'contain' | 'stretch' — cover is best for Stories (no squash)
+    let tiltDeg = 0; // -15..15 manual gyro nudge
+    let exportPreset = 'meta'; // 'meta' = 3024×4032, 'story' = 1080×1920
+    const consentModal = $("consentModal");
+    const consentCheck = $("consentCheck");
+    const consentClose = $("consentClose");
+    // First-visit modal — localStorage gate
+    (function initConsent() {
+      try {
+        if (localStorage.getItem("formatPressConsent") === "true") {
+          consentModal.classList.remove("visible");
+          consentModal.setAttribute("aria-hidden", "true");
+        } else {
+          consentModal.classList.add("visible");
+          consentModal.setAttribute("aria-hidden", "false");
+        }
+      } catch { // private mode
+        consentModal.classList.add("visible");
+      }
+      consentCheck?.addEventListener("change", () => {
+        consentClose.disabled = !consentCheck.checked;
+      });
+      consentClose?.addEventListener("click", () => {
+        if (!consentCheck.checked) return;
+        try { localStorage.setItem("formatPressConsent", "true"); } catch {}
+        consentModal.classList.remove("visible");
+        consentModal.setAttribute("aria-hidden", "true");
+      });
+      consentModal?.addEventListener("click", (e) => {
+        if (e.target === consentModal && consentCheck.checked) consentClose.click();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && consentModal.classList.contains("visible") && consentCheck.checked) {
+          consentClose.click();
+        }
+      });
+    })();
+
+    // Export preset / Fit / Tilt / Safe overlay controls
+    (function initControls() {
+      function updateDimensionsUI() {
+        const { w, h } = getExportDimensions();
+        if (dimensionsValue) dimensionsValue.textContent = `${w} × ${h} px`;
+        if (presetHint) presetHint.textContent = exportPreset === 'story' ? 'Story 9:16' : 'Meta 3:4';
+      }
+      updateDimensionsUI();
+
+      presetMeta?.addEventListener("click", () => {
+        exportPreset = 'meta';
+        presetMeta.classList.add("active"); presetMeta.setAttribute("aria-pressed","true");
+        presetStory.classList.remove("active"); presetStory.setAttribute("aria-pressed","false");
+        updateDimensionsUI();
+        if (sourceDataUrl && finalDataUrl) showStatus("Preset → Meta 3024×4032. Tap Stamp again to re-export.", "loading", true);
+        else if (sourceDataUrl) showStatus("Preset → Meta 3024×4032. Ready to stamp.", "success");
+      });
+      presetStory?.addEventListener("click", () => {
+        exportPreset = 'story';
+        presetStory.classList.add("active"); presetStory.setAttribute("aria-pressed","true");
+        presetMeta.classList.remove("active"); presetMeta.setAttribute("aria-pressed","false");
+        updateDimensionsUI();
+        if (sourceDataUrl && finalDataUrl) showStatus("Preset → Story 1080×1920 (fills Instagram). Tap Stamp again.", "loading", true);
+        else if (sourceDataUrl) showStatus("Preset → Story 1080×1920 — perfect for Instagram.", "success");
+      });
+
+      document.querySelectorAll("[data-fit]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          fitMode = btn.getAttribute("data-fit");
+          document.querySelectorAll("[data-fit]").forEach(b => {
+            const isActive = b.getAttribute("data-fit") === fitMode;
+            b.classList.toggle("active", isActive);
+            b.setAttribute("aria-pressed", String(isActive));
+          });
+          if (sourceDataUrl && finalDataUrl) showStatus(`Fit → ${fitMode}. Tap Stamp again to apply.`, "loading", true);
+        });
+      });
+
+      function updateTilt(val) {
+        tiltDeg = parseInt(val, 10) || 0;
+        if (tiltValue) tiltValue.textContent = `${tiltDeg > 0 ? '+' : ''}${tiltDeg}°`;
+        if (tiltOut) tiltOut.textContent = `${tiltDeg > 0 ? '+' : ''}${tiltDeg}°`;
+        // live preview tilt on preview image via CSS for immediacy (does not affect export until stamped)
+        if (sourceDataUrl && !finalDataUrl) {
+          preview.style.transform = tiltDeg ? `rotate(${tiltDeg}deg)` : 'none';
+          preview.style.transition = 'transform .15s ease';
+        } else {
+          preview.style.transform = 'none';
+        }
+      }
+      tiltRange?.addEventListener("input", (e) => {
+        updateTilt(e.target.value);
+        if (sourceDataUrl && finalDataUrl) showStatus(`Tilt ${tiltDeg > 0 ? '+' : ''}${tiltDeg}° — tap Stamp to bake it.`, "loading", true);
+      });
+      updateTilt(tiltRange?.value || "0");
+
+      safeToggle?.addEventListener("change", () => {
+        if (safeToggle.checked) safeOverlay.classList.add("visible");
+        else safeOverlay.classList.remove("visible");
+      });
+
+      revertBtn?.addEventListener("click", () => {
+        if (sourceDataUrlBackup || sourceDataUrl) {
+          finalDataUrl = null;
+          pureBase64 = null;
+          preview.src = sourceDataUrl;
+          previewLabel.textContent = "Source ready";
+          revertBtn.style.display = "none";
+          preview.style.transform = tiltDeg ? `rotate(${tiltDeg}deg)` : 'none';
+          outputState.classList.remove("ready");
+          stateMark.textContent = "—";
+          stateTitle.textContent = "Reverted to source";
+          stateDescription.textContent = "Stamp again with new settings.";
+          sizeValue.textContent = "—";
+          base64Value.textContent = "Unavailable";
+          base64Value.classList.remove("ready");
+          copyBtn.disabled = true;
+          saveBtn.disabled = true;
+          convertBtn.disabled = false;
+          convertText.textContent = "Stamp output";
+          setStepState("loaded");
+          showStatus("Reverted to original source. Ready to stamp again.", "success");
+        }
+      });
+    })();
+
+    /** @type {string | null} */ let lastError = null;
 
     function openLibrary() { fileInput.click(); }
     function openCamera() { cameraInput.click(); }
@@ -979,9 +1481,20 @@
 
     function handleFile(file) {
       if (file.type !== "image/jpeg" && !/\.jpe?g$/i.test(file.name)) {
-        showStatus("Please choose a JPG or JPEG image.", "error");
+        showStatus("Please choose a JPG or JPEG image — PNG/WebP/HEIC are not supported (Meta pipeline is JPEG only).", "error");
+        dropZone.classList.add("error");
+        setTimeout(() => dropZone.classList.remove("error"), 800);
         return;
       }
+      if (file.size > MAX_FILE_SIZE) {
+        showStatus(`File too large (${formatBytes(file.size)}). Max ${formatBytes(MAX_FILE_SIZE)} to prevent browser OOM on 3024×4032 canvas. Try compressing first.`, "error");
+        dropZone.classList.add("error");
+        setTimeout(() => dropZone.classList.remove("error"), 900);
+        return;
+      }
+
+      // Revoke previous object URLs / backup for undo
+      if (sourceDataUrl) sourceDataUrlBackup = sourceDataUrl;
 
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -991,25 +1504,32 @@
         pureBase64 = null;
 
         preview.src = sourceDataUrl;
+        preview.style.transform = tiltDeg ? `rotate(${tiltDeg}deg)` : 'none';
+        preview.style.transition = tiltDeg ? 'transform .15s ease' : 'none';
         previewLabel.textContent = "Source ready";
         previewWrap.classList.add("visible");
         dropContent.style.display = "none";
         dropZone.classList.add("has-preview");
+        dropZone.classList.remove("error");
         fileName.textContent = file.name || "Selected photo";
         fileMeta.textContent = `${formatBytes(file.size)} · Ready to inspect`;
         convertBtn.disabled = false;
         convertText.textContent = "Stamp output";
         copyBtn.disabled = true;
         saveBtn.disabled = true;
+        if (revertBtn) revertBtn.style.display = "none";
         outputState.classList.remove("ready");
         stateMark.textContent = "—";
         stateTitle.textContent = "Ready to stamp";
-        stateDescription.textContent = "Orientation and private metadata will be normalized.";
+        stateDescription.textContent = `Cover • ${tiltDeg ? tiltDeg+'° tilt • ' : ''}Orientation & GPS will be normalized.`;
+        const { w, h } = getExportDimensions();
+        dimensionsValue.textContent = `${w} × ${h} px`;
         sizeValue.textContent = "—";
         base64Value.textContent = "Unavailable";
         base64Value.classList.remove("ready");
         setStepState("loaded");
         hideStatus();
+        if (safeOverlay && safeToggle?.checked) safeOverlay.classList.add("visible");
       };
       reader.onerror = () => showStatus("Could not read that image. Try another JPG.", "error");
       reader.readAsDataURL(file);
@@ -1035,6 +1555,8 @@
       status.innerHTML = loading
         ? `<span class="spinner" aria-hidden="true"></span><span>${message}</span>`
         : `<span aria-hidden="true">${type === "success" ? "✓" : "!"}</span><span>${message}</span>`;
+      if (dropStatus) dropStatus.textContent = message;
+      lastError = type === "error" ? message : null;
     }
 
     function hideStatus() {
@@ -1051,7 +1573,26 @@
       }
     }
 
-    function drawCorrected(dataUrl, targetW, targetH, orientation) {
+    /** Convert Blob → DataURL (for piexif) */
+    function blobToDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error("Blob read failed"));
+        r.readAsDataURL(blob);
+      });
+    }
+
+    /**
+     * Draw with EXIF orientation + optional gyro tilt + fitMode, using toBlob (lower memory)
+     * @param {string} dataUrl - source
+     * @param {number} targetW
+     * @param {number} targetH
+     * @param {number} orientation - 1..8
+     * @param {string} fitMode - 'cover' | 'contain' | 'stretch'
+     * @param {number} tiltDeg - -15..15 manual gyro nudge
+     */
+    function drawCorrected(dataUrl, targetW, targetH, orientation, fitMode = 'cover', tiltDeg = 0) {
       return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => {
@@ -1065,6 +1606,11 @@
             return;
           }
 
+          // Background for contain/tilt letterbox
+          context.fillStyle = "#0c0c0b";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+
+          // EXIF orientation (setTransform resets matrix)
           switch (orientation) {
             case 2: context.setTransform(-1, 0, 0, 1, targetW, 0); break;
             case 3: context.setTransform(-1, 0, 0, -1, targetW, targetH); break;
@@ -1075,15 +1621,57 @@
             case 8: context.setTransform(0, -1, 1, 0, 0, targetW); break;
             default: context.setTransform(1, 0, 0, 1, 0, 0);
           }
-          context.drawImage(image, 0, 0, targetW, targetH);
-          resolve(canvas.toDataURL("image/jpeg", .95));
+
+          // Manual gyro tilt — composed after orientation
+          if (tiltDeg) {
+            // Move origin to canvas center, rotate, move back
+            // Need to compensate for current transform: use transform() not setTransform
+            context.translate(canvas.width / 2, canvas.height / 2);
+            context.rotate(tiltDeg * Math.PI / 180);
+            context.translate(-canvas.width / 2, -canvas.height / 2);
+          }
+
+          const iw = image.naturalWidth || targetW;
+          const ih = image.naturalHeight || targetH;
+          const dw = canvas.width;
+          const dh = canvas.height;
+
+          if (fitMode === 'stretch') {
+            context.drawImage(image, 0, 0, dw, dh);
+          } else {
+            const scaleCover = Math.max(dw / iw, dh / ih);
+            const scaleContain = Math.min(dw / iw, dh / ih);
+            const scale = fitMode === 'cover' ? scaleCover : scaleContain;
+            const w = iw * scale;
+            const h = ih * scale;
+            const x = (dw - w) / 2;
+            const y = (dh - h) / 2;
+            // For contain, background already filled; for cover we just draw centered cropped
+            context.drawImage(image, x, y, w, h);
+          }
+
+          // Use toBlob (async, lower peak memory than toDataURL)
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              reject(new Error("Canvas export failed — image may be too large for this browser"));
+              return;
+            }
+            try {
+              const dataUrlOut = await blobToDataURL(blob);
+              resolve(dataUrlOut);
+            } catch (e) { reject(e); }
+          }, "image/jpeg", 0.95);
         };
-        image.onerror = () => reject(new Error("Image could not be decoded"));
+        image.onerror = () => reject(new Error("Image could not be decoded — file may be corrupted"));
         image.src = dataUrl;
       });
     }
 
-    function buildExif(dataUrl) {
+    function getExportDimensions() {
+      return exportPreset === 'story' ? { w: 1080, h: 1920 } : { w: 3024, h: 4032 };
+    }
+
+    function buildExif(dataUrl, targetW = 3024, targetH = 4032) {
       let exif;
       try {
         exif = piexif.load(dataUrl);
@@ -1101,8 +1689,8 @@
       exif["0th"][piexif.ImageIFD.Model] = "Ray-Ban Meta Smart Glasses 2";
       exif["0th"][piexif.ImageIFD.Orientation] = 1;
       exif.Exif[piexif.ExifIFD.ColorSpace] = 1;
-      exif.Exif[piexif.ExifIFD.PixelXDimension] = 3024;
-      exif.Exif[piexif.ExifIFD.PixelYDimension] = 4032;
+      exif.Exif[piexif.ExifIFD.PixelXDimension] = targetW;
+      exif.Exif[piexif.ExifIFD.PixelYDimension] = targetH;
       return exif;
     }
 
@@ -1156,12 +1744,28 @@
     }
 
     async function convertImage() {
+      const { w, h } = getExportDimensions();
       const orientation = readOrientation(sourceDataUrl);
-      const corrected = await drawCorrected(sourceDataUrl, 3024, 4032, orientation);
-      const exifBytes = piexif.dump(buildExif(sourceDataUrl));
-      finalDataUrl = piexif.insert(exifBytes, corrected);
+      let corrected;
+      try {
+        corrected = await drawCorrected(sourceDataUrl, w, h, orientation, fitMode, tiltDeg);
+      } catch (e) {
+        throw new Error(`Canvas step failed: ${e.message}`);
+      }
+      let exifBytes;
+      try {
+        exifBytes = piexif.dump(buildExif(sourceDataUrl, w, h));
+      } catch (e) {
+        throw new Error(`EXIF build failed: ${e.message}`);
+      }
+      try {
+        finalDataUrl = piexif.insert(exifBytes, corrected);
+      } catch (e) {
+        throw new Error(`EXIF insert failed: ${e.message}`);
+      }
       pureBase64 = finalDataUrl.split(",")[1];
-      return { orientation };
+      if (!pureBase64) throw new Error("Base64 extraction failed");
+      return { orientation, w, h };
     }
 
     convertBtn.addEventListener("click", async () => {
@@ -1173,15 +1777,17 @@
       showStatus("Normalizing orientation and writing output metadata…", "loading", true);
 
       try {
-        const { orientation } = await convertImage();
+        const { orientation, w, h } = await convertImage();
         preview.src = finalDataUrl;
-        previewLabel.textContent = "Output ready";
+        preview.style.transform = "none"; // clear live tilt preview — baked into canvas
+        previewLabel.textContent = exportPreset === 'story' ? "Story ready 1080×1920" : "Output ready 3024×4032";
         outputState.classList.add("ready");
         stateMark.textContent = "✓";
-        stateTitle.textContent = "Output stamped";
-        stateDescription.textContent = "Your converted frame is ready to copy or save.";
-        orientationValue.textContent = orientation === 1 ? "Already correct" : "Corrected";
+        stateTitle.textContent = exportPreset === 'story' ? "Story stamped" : "Output stamped";
+        stateDescription.textContent = fitMode === 'cover' ? "Cover-cropped • Tilt baked • Ready for Instagram." : `Fit: ${fitMode} • Tilt: ${tiltDeg}° • Ready.`;
+        orientationValue.textContent = orientation === 1 ? "Already correct" : `Corrected${tiltDeg ? ` + ${tiltDeg}°` : ''}`;
         exifValue.textContent = "Clean + stamped";
+        dimensionsValue.textContent = `${w} × ${h} px`;
         sizeValue.textContent = formatBytes(dataUrlToBlob(finalDataUrl).size);
         base64Value.textContent = "Available";
         base64Value.classList.add("ready");
@@ -1189,13 +1795,17 @@
         saveBtn.disabled = false;
         convertBtn.disabled = false;
         convertText.textContent = "Stamp again";
+        revertBtn.style.display = "inline-flex";
         setStepState("stamped");
-        showStatus("Output ready. GPS and private lens metadata were removed.", "success");
+        showStatus(exportPreset === 'story' ? "Story ready — 1080×1920, GPS stripped. Share to Instagram!" : "Output ready. GPS and private lens metadata were removed. (Cover = no squash)", "success");
       } catch (error) {
         console.error(error);
+        lastError = error.message;
         convertBtn.disabled = false;
         convertText.textContent = "Try again";
-        showStatus("Conversion failed. Try another JPG image.", "error");
+        dropZone.classList.add("error");
+        setTimeout(()=>dropZone.classList.remove("error"),800);
+        showStatus(error.message.includes("Canvas") ? error.message : `Conversion failed: ${error.message}. Try another JPG or lower tilt.`, "error");
       }
     });
 
@@ -1211,17 +1821,26 @@
 
     saveBtn.addEventListener("click", async () => {
       if (!finalDataUrl) return;
+      const { w, h } = getExportDimensions();
+      const fname = exportPreset === 'story' ? `meta-story-${w}x${h}.jpg` : `meta-glasses-${w}x${h}.jpg`;
       try {
-        const result = await saveOrShareImage(finalDataUrl);
+        const result = await saveOrShareImage(finalDataUrl, fname);
         if (result === "cancelled") {
           showStatus("Share cancelled. Your output is still ready.", "success");
         } else {
-          showStatus(result === "shared" ? "Share sheet opened." : "Download started.", "success");
+          showStatus(result === "shared" ? `Share sheet opened (${w}×${h}). Pick Instagram → Story!` : `Download started (${fname}).`, "success");
         }
       } catch {
         showStatus("Could not save this output in the current browser.", "error");
       }
     });
+
+    // PWA — register service worker for offline lab use (no image caching)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>
